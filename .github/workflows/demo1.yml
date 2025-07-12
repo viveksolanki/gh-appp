@@ -1,14 +1,11 @@
 name: Demo Workflow
 on:
-  pull_request:
-    types:
-      - opened
   workflow_dispatch:
   push:
     branches:
       - main
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Output event data
@@ -19,7 +16,26 @@ jobs:
         run: npm ci
       - name: Test code
         run: npm run lint
-      - name: Build code
-        run : npm run build
-      - name: Deploy code
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code
+        uses: actions/checkout@v4
+      - name: Intall Dependencies
+        run: npm ci
+      - name: Trigger build
+        run: npm run build
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-files
+          path: |
+            dist
+            package.json
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: deploy
         run: echo "Deploying..."
